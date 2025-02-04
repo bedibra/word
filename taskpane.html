@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>My Word Diff Add-in</title>
+  </head>
+  <body>
+    <h3>Word Diff Compare</h3>
+    
+    <!-- A text area for entering custom text -->
+    <textarea id="customText" rows="6" cols="40" placeholder="Enter text..."></textarea>
+    <br />
+    
+    <!-- The button to trigger comparison -->
+    <button id="compareBtn">Compare & Insert</button>
+    
+    <!-- Load Office.js and our diff library, then taskpane.js -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script src="diff-match-patch.js"></script>
+    <script src="taskpane.js"></script>
+  </body>
+</html>
