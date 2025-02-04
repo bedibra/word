@@ -22,55 +22,38 @@ Office.onReady((info) => {
  * Reads selected text in Word, compares it to the user input,
  * and replaces the selection with diff-based HTML.
  */
+
 async function compareAndReplace() {
-  console.log("compareAndReplace triggered.");
   try {
-    await Word.run(async (context) => {
-      // Get the currently selected text
+    await Word.run(async context => {
+      // 1. Get the current selection and load its font properties
       const selection = context.document.getSelection();
-      selection.load("text");
-      await context.sync(); // Loads the selection text
+      selection.load("text, font/name, font/size, font/color");
+      await context.sync();
 
-      const oldText = selection.text || "";
-      const newText = document.getElementById("customText").value || "";
+      const oldText = selection.text;
+      const newText = document.getElementById("customText").value;
 
-      console.log("Selected text:", oldText);
-      console.log("New text:", newText);
+      // 2. Generate diff HTML (using diff-match-patch)
+      const diffHtml = generateDiffHtml(oldText, newText);
 
-      // Create a diff-match-patch instance
-      const dmp = new diff_match_patch();
-      let diffs = dmp.diff_main(oldText, newText);
-      dmp.diff_cleanupSemantic(diffs);
-
-      // Build HTML with <del> / <ins> tags using a standard for loop
-      let diffHtml = "";
-      for (let i = 0; i < diffs.length; i++) {
-        const op = diffs[i][0];
-        const data = diffs[i][1];
-        // Escape HTML special characters
-        const escaped = data
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-        
-        if (op === DIFF_EQUAL) {
-          diffHtml += `<span>${escaped}</span>`;
-        } else if (op === DIFF_DELETE) {
-          diffHtml += `<del style="color:black;">${escaped}</del>`;
-        } else if (op === DIFF_INSERT) {
-          diffHtml += `<ins style="color:black;">${escaped}</ins>`;
-        }
-      }
-
-      console.log("Final diffHtml:", diffHtml);
-
-      // Replace the selection with the diff-based HTML
+      // 3. Insert the diff HTML, replacing the current selection
       selection.insertHtml(diffHtml, Word.InsertLocation.replace);
       await context.sync();
 
-      console.log("Comparison inserted into the document!");
+      // 4. Reapply the original formatting to the newly inserted content.
+      //    Note: This applies the same font properties to all content,
+      //    so if you have inline styles in your diff markup (like red/green colors)
+      //    for insertions/deletions, you might need to adjust accordingly.
+      const newRange = context.document.getSelection();
+      newRange.font.name = selection.font.name;
+      newRange.font.size = selection.font.size;
+      newRange.font.color = selection.font.color;
+      await context.sync();
+
+      console.log("Comparison inserted with original formatting!");
     });
   } catch (error) {
-    console.error("Error in compareAndReplace:", error);
+    console.error("Error performing compare and replace:", error);
   }
 }
